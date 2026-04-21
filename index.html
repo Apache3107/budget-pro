@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vault — Finance Personnelle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        /* --- DESIGN SYSTEM VAULT (COMPLET) --- */
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root {
+            --bg:#f0ede8;--bg2:#e8e4dd;--surface:#ffffff;--surface2:#faf9f7;--surface3:#f4f2ee;
+            --overlay:rgba(15,14,12,0.55);
+            --ink:#0f0e0c;--ink2:#2c2b28;--ink3:#6b6860;--ink4:#a8a59e;
+            --line:rgba(15,14,12,0.08);--line2:rgba(15,14,12,0.14);--line3:rgba(15,14,12,0.22);
+            --accent:#1a472a;--accent-mid:#2d6a40;--accent-light:#e8f5ee;
+            --green:#1a5c2e;--red:#8b1a1a;--amber:#7a4a08;
+            --sans:'Cabinet Grotesk',sans-serif;
+            --serif:'Instrument Serif',serif;
+            --mono:'IBM Plex Mono',monospace;
+            --rl:12px;--rxl:18px;
+            --sidebar-w:260px;
+        }
+        [data-theme="dark"] {
+            --bg:#0f0e0c;--bg2:#161512;--surface:#1e1c18;--surface2:#252320;--surface3:#2c2a26;
+            --ink:#f0ede8;--ink2:#d8d4cc;--ink3:#8a877f;--ink4:#5a5750;
+            --line:rgba(240,237,232,0.07);--accent:#3d9e5c;
+        }
+
+        body { font-family: var(--sans); background: var(--bg); color: var(--ink); overflow: hidden; height: 100vh; -webkit-font-smoothing: antialiased; }
+        .shell { display: flex; height: 100vh; }
+
+        /* Sidebar & Menu */
+        .sidebar { width: var(--sidebar-w); background: var(--ink); color: #fff; display: flex; flex-direction: column; z-index: 100; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sb-brand { padding: 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sb-logo { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; }
+        .sb-nav { flex: 1; padding: 20px 12px; }
+        .nav-btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px; border: none; background: transparent; color: var(--ink4); cursor: pointer; border-radius: 8px; font-family: var(--sans); font-size: 14px; transition: 0.2s; text-align: left;}
+        .nav-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .nav-btn.active { background: var(--accent); color: #fff; }
+
+        /* Main Content */
+        .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+        .topbar { height: 64px; background: var(--surface); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; z-index: 10; }
+        .content { flex: 1; overflow-y: auto; padding: 24px; scroll-behavior: smooth; }
+
+        /* Navigation UX */
+        .period-picker { display: flex; background: var(--surface3); padding: 4px; border-radius: 10px; gap: 4px; }
+        .pp-btn { border: none; background: transparent; padding: 6px 14px; font-size: 11px; font-weight: 700; border-radius: 7px; cursor: pointer; color: var(--ink3); transition: 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+        .pp-btn.active { background: var(--surface); color: var(--ink); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+        .time-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .time-label { font-family: var(--serif); font-size: 28px; font-style: italic; }
+        .btn-circle { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line2); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi { background: var(--surface); padding: 24px; border-radius: var(--rl); border: 1px solid var(--line); position: relative; overflow: hidden; }
+        .kpi-label { font-size: 10px; text-transform: uppercase; color: var(--ink3); font-weight: 800; margin-bottom: 8px; letter-spacing: 0.08em; }
+        .kpi-val { font-family: var(--mono); font-size: 26px; font-weight: 600; }
+
+        /* Transactions */
+        .tx-card { background: var(--surface); border-radius: var(--rl); border: 1px solid var(--line); overflow: hidden; }
+        .tx-item { display: grid; grid-template-columns: auto 1fr auto; padding: 16px 20px; border-bottom: 1px solid var(--line); align-items: center; gap: 16px; }
+        .tx-cat-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .tx-amount { font-family: var(--mono); font-weight: 600; }
+        .tx-amount.income { color: var(--green); }
+        .tx-amount.exception { color: var(--amber); }
+
+        /* Modals & Forms */
+        .modal-overlay { position: fixed; inset: 0; background: var(--overlay); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 300; opacity: 0; transition: 0.3s; }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal { background: var(--surface); width: 100%; max-width: 480px; border-radius: 24px; padding: 24px; }
+        .fi { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--line2); background: var(--bg); font-family: var(--sans); margin-top: 8px; outline: none; }
+        
+        .fab { position: fixed; bottom: 32px; right: 32px; width: 64px; height: 64px; border-radius: 32px; background: var(--ink); color: #fff; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div class="shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="sb-brand">
+            <div class="sb-logo"></div>
+            <div>
+                <h1 style="font-family: var(--serif); font-size: 22px; font-style: italic;">Vault</h1>
+            </div>
+        </div>
+        <nav class="sb-nav">
+            <button class="nav-btn active"><span>📊</span> Dashboard</button>
+            <button class="nav-btn"><span>📋</span> Transactions</button>
+            <div style="margin-top: 40px;">
+                <button class="nav-btn" onclick="app.toggleTheme()"><span>🌓</span> Mode Sombre</button>
+                <button class="nav-btn" onclick="app.resetData()" style="color: #ef4444;"><span>🗑️</span> Réinitialiser</button>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div class="period-picker">
+                <button class="pp-btn" data-view="week">Semaine</button>
+                <button class="pp-btn active" data-view="month">Mois</button>
+                <button class="pp-btn" data-view="year">Année</button>
+            </div>
+            <div id="burn-rate" style="font-family: var(--mono); font-size: 11px;">Burn Rate: --/j</div>
+        </header>
+
+        <div class="content">
+            <div class="time-nav">
+                <button class="btn-circle" onclick="app.shiftPeriod(-1)">←</button>
+                <h2 class="time-label" id="current-period-label">...</h2>
+                <button class="btn-circle" onclick="app.shiftPeriod(1)">→</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="kpi"><p class="kpi-label">Cashflow</p><div id="kpi-cashflow" class="kpi-val">0.00 €</div></div>
+                <div class="kpi"><p class="kpi-label">Revenus</p><div id="kpi-income" class="kpi-val" style="color: var(--green);">0.00 €</div></div>
+                <div class="kpi"><p class="kpi-label">Dépenses</p><div id="kpi-expense" class="kpi-val" style="color: var(--red);">0.00 €</div></div>
+            </div>
+
+            <div class="chart-card" style="background: var(--surface); padding: 24px; border-radius: var(--rxl); margin-bottom: 24px; border: 1px solid var(--line);">
+                <div style="height: 300px;"><canvas id="mainChart"></canvas></div>
+            </div>
+
+            <div id="tx-list" class="tx-card"></div>
+        </div>
+    </main>
+</div>
+
+<button class="fab" onclick="app.openModal()">+</button>
+
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+        <h3 style="font-family: var(--serif); font-size: 22px; margin-bottom: 20px;">Nouvelle Opération</h3>
+        <form id="tx-form">
+            <input type="text" id="f-name" class="fi" placeholder="Description" required>
+            <input type="number" id="f-amount" class="fi" placeholder="Montant (€)" step="0.01" required>
+            <select id="f-type" class="fi">
+                <option value="depense">Dépense</option>
+                <option value="revenu">Revenu</option>
+                <option value="exceptionnelle">Exceptionnelle</option>
+            </select>
+            <input type="text" id="f-cat" class="fi" placeholder="Catégorie" required>
+            <input type="date" id="f-date" class="fi" required>
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <button type="submit" class="nav-btn active" style="justify-content: center; flex: 1;">Enregistrer</button>
+                <button type="button" class="nav-btn" onclick="app.closeModal()" style="justify-content: center; flex: 1;">Annuler</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+/**
+ * VAULT CORE ENGINE - Version 2.1 (Stable)
+ */
+const app = {
+    state: {
+        transactions: [],
+        view: 'month',
+        refDate: new Date(),
+        theme: 'light',
+        charts: { main: null }
+    },
+
+    // --- 1. INITIALISATION SÉCURISÉE (PATCH ÉTAPE 2) ---
+    init() {
+        try {
+            const saved = localStorage.getItem('vault_tx_v2');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.state.transactions = Array.isArray(parsed) ? parsed : [];
+            }
+        } catch (e) {
+            console.error("Vault Safe-Parser: Erreur de lecture.");
+            this.state.transactions = [];
+        }
+
+        this.state.theme = localStorage.getItem('vault_theme') || 'light';
+        this.applyTheme();
+        this.setupEventListeners();
+        this.render();
+    },
+
+    // --- 2. GÉNÉRATEUR D'ID ROBUSTE (PATCH ÉTAPE 2) ---
+    generateUUID() {
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+    },
+
+    setupEventListeners() {
+        document.querySelectorAll('.pp-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelector('.pp-btn.active').classList.remove('active');
+                e.target.classList.add('active');
+                this.state.view = e.target.dataset.view;
+                this.render();
+            });
+        });
+
+        document.getElementById('tx-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.addTransaction();
+        });
+    },
+
+    // --- 3. LOGIQUE DE NAVIGATION SÉCURISÉE (PATCH ÉTAPE 2) ---
+    shiftPeriod(dir) {
+        const d = new Date(this.state.refDate);
+        if (this.state.view === 'month') {
+            d.setDate(15); // Sécurité anti-saut de mois (ex: 31 Jan -> Feb)
+            d.setMonth(d.getMonth() + dir);
+        } else if (this.state.view === 'year') {
+            d.setFullYear(d.getFullYear() + dir);
+        } else {
+            d.setDate(d.getDate() + (dir * 7));
+        }
+        this.state.refDate = d;
+        this.render();
+    },
+
+    getRange() {
+        const d = new Date(this.state.refDate);
+        let start, end;
+        if (this.state.view === 'week') {
+            const day = d.getDay() || 7;
+            start = new Date(d.setHours(0,0,0,0));
+            start.setDate(d.getDate() - day + 1);
+            end = new Date(start);
+            end.setDate(start.getDate() + 6);
+        } else if (this.state.view === 'month') {
+            start = new Date(d.getFullYear(), d.getMonth(), 1);
+            end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        } else {
+            start = new Date(d.getFullYear(), 0, 1);
+            end = new Date(d.getFullYear(), 11, 31);
+        }
+        return { start, end };
+    },
+
+    process() {
+        const range = this.getRange();
+        const filtered = this.state.transactions.filter(t => {
+            const dt = new Date(t.date);
+            return dt >= range.start && dt <= range.end;
+        });
+
+        const stats = filtered.reduce((acc, t) => {
+            const val = parseFloat(t.amount);
+            if (t.type === 'revenu') acc.income += val;
+            else if (t.type === 'depense') acc.expense += val;
+            else acc.exceptional += val;
+            return acc;
+        }, { income: 0, expense: 0, exceptional: 0 });
+
+        stats.cashflow = stats.income - (stats.expense + stats.exceptional);
+        stats.txs = filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+        return stats;
+    },
+
+    render() {
+        const data = this.process();
+        const fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+
+        document.getElementById('current-period-label').innerText = this.formatDateLabel();
+        document.getElementById('kpi-cashflow').innerText = fmt.format(data.cashflow);
+        document.getElementById('kpi-income').innerText = fmt.format(data.income);
+        document.getElementById('kpi-expense').innerText = fmt.format(data.expense);
+
+        this.renderList(data.txs, fmt);
+        this.renderChart(data);
+    },
+
+    renderList(txs, fmt) {
+        const container = document.getElementById('tx-list');
+        if (txs.length === 0) {
+            container.innerHTML = `<div style="padding:40px; text-align:center; color:var(--ink4);">Aucune donnée</div>`;
+            return;
+        }
+        container.innerHTML = txs.map(t => `
+            <div class="tx-item">
+                <div class="tx-cat-icon">🏷️</div>
+                <div class="tx-info">
+                    <h4 style="font-size:14px;">${t.name}</h4>
+                    <p style="font-size:12px; color:var(--ink3);">${new Date(t.date).toLocaleDateString()}</p>
+                </div>
+                <div class="tx-amount ${t.type === 'revenu' ? 'income' : (t.type === 'exceptionnelle' ? 'exception' : '')}">
+                    ${t.type === 'revenu' ? '+' : '-'}${fmt.format(t.amount)}
+                </div>
+            </div>
+        `).join('');
+    },
+
+    // --- 4. GESTIONNAIRE DE GRAPHIQUE OPTIMISÉ (PATCH ÉTAPE 2) ---
+    renderChart(data) {
+        const ctx = document.getElementById('mainChart');
+        if (!ctx) return;
+
+        if (this.state.charts.main instanceof Chart) {
+            this.state.charts.main.destroy();
+        }
+
+        const isDark = this.state.theme === 'dark';
+        this.state.charts.main = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Revenus', 'Dépenses', 'Exceptionnel'],
+                datasets: [{
+                    data: [data.income, data.expense, data.exceptional],
+                    backgroundColor: [ '#1a472a', '#8b1a1a', '#7a4a08' ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' } }
+                }
+            }
+        });
+    },
+
+    addTransaction() {
+        const newTx = {
+            id: this.generateUUID(),
+            name: document.getElementById('f-name').value,
+            amount: parseFloat(document.getElementById('f-amount').value),
+            type: document.getElementById('f-type').value,
+            category: document.getElementById('f-cat').value,
+            date: document.getElementById('f-date').value
+        };
+
+        this.state.transactions.push(newTx);
+        this.save();
+        this.closeModal();
+        this.render();
+        document.getElementById('tx-form').reset();
+    },
+
+    formatDateLabel() {
+        const d = this.state.refDate;
+        if (this.state.view === 'month') return d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        if (this.state.view === 'year') return d.getFullYear();
+        return "Semaine";
+    },
+
+    save() { localStorage.setItem('vault_tx_v2', JSON.stringify(this.state.transactions)); },
+    
+    applyTheme() { document.documentElement.setAttribute('data-theme', this.state.theme); },
+    toggleTheme() {
+        this.state.theme = this.state.theme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('vault_theme', this.state.theme);
+        this.applyTheme();
+        this.render();
+    },
+
+    openModal() { 
+        document.getElementById('f-date').valueAsDate = new Date();
+        document.getElementById('modal-overlay').classList.add('open'); 
+    },
+    closeModal() { document.getElementById('modal-overlay').classList.remove('open'); },
+    
+    resetData() {
+        if(confirm('Supprimer toutes les données ?')) {
+            localStorage.removeItem('vault_tx_v2');
+            this.state.transactions = [];
+            this.render();
+        }
+    }
+};
+
+app.init();
+</script>
+</body>
+</html>
